@@ -4,8 +4,89 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>WaveTunes</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet"/>
-  <script defer src="app.js"></script>
+  <style>
+    /* Global Styles */
+    body {
+      font-family: 'Arial', sans-serif;
+      background-color: #1a202c;
+      color: white;
+      margin: 0;
+      padding: 0;
+    }
+
+    header {
+      background-color: #2d3748;
+      color: #fbb6ce;
+    }
+
+    header h1 {
+      font-size: 2.5rem;
+    }
+
+    header p {
+      font-size: 1rem;
+    }
+
+    input, button {
+      outline: none;
+    }
+
+    button {
+      cursor: pointer;
+    }
+
+    /* Custom Styles for Search Section */
+    input[type="text"] {
+      width: 80%;
+      padding: 1rem;
+      background-color: #4a5568;
+      border-radius: 0.375rem;
+      color: white;
+      border: none;
+    }
+
+    button {
+      background-color: #ec4899;
+      padding: 0.75rem 2rem;
+      font-weight: bold;
+      border-radius: 9999px;
+      transition: background-color 0.3s ease;
+    }
+
+    button:hover {
+      background-color: #db2777;
+    }
+
+    /* Results Section */
+    #results {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 1rem;
+    }
+
+    #results .result {
+      background-color: #2d3748;
+      padding: 1rem;
+      border-radius: 0.375rem;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    #results .result:hover {
+      background-color: #4a5568;
+    }
+
+    /* Now Playing Section */
+    #playerSection {
+      background-color: #2d3748;
+      padding: 2rem;
+      border-radius: 0.375rem;
+    }
+
+    #player {
+      border-radius: 0.375rem;
+    }
+  </style>
 </head>
 <body class="bg-gray-900 text-white font-sans min-h-screen flex flex-col items-center">
   <header class="w-full text-center py-6 bg-gray-800 shadow-lg">
@@ -31,5 +112,63 @@
       </div>
     </div>
   </main>
+
+  <script>
+    const API_KEY = 'AIzaSyBE3JOaMAIWFk82vAQ8F5oz5NKhVcHfd5g'; // Replace with your actual API key
+    const searchBtn = document.getElementById('searchBtn');
+    const searchInput = document.getElementById('searchInput');
+    const results = document.getElementById('results');
+    const player = document.getElementById('player');
+    const playerSection = document.getElementById('playerSection');
+
+    searchBtn.addEventListener('click', searchYouTube);
+
+    async function searchYouTube() {
+      const query = searchInput.value.trim();
+      if (!query) return;
+
+      results.innerHTML = '<p class="text-gray-400">Searching...</p>';
+
+      const url = `https://www.googleapis.com/youtube/v3/search?part=snippet&type=video&maxResults=10&q=${encodeURIComponent(query)}&key=${API_KEY}`;
+
+      try {
+        const res = await fetch(url);
+        const data = await res.json();
+
+        if (!data.items.length) {
+          results.innerHTML = '<p class="text-gray-400">No results found.</p>';
+          return;
+        }
+
+        displayResults(data.items);
+      } catch (err) {
+        results.innerHTML = '<p class="text-red-400">Failed to fetch results. Check your API key or internet connection.</p>';
+      }
+    }
+
+    function displayResults(videos) {
+      results.innerHTML = '';
+      videos.forEach(video => {
+        const vidId = video.id.videoId;
+        const title = video.snippet.title;
+        const thumb = video.snippet.thumbnails.medium.url;
+
+        const videoCard = document.createElement('div');
+        videoCard.className = 'result';
+        videoCard.innerHTML = `
+          <img src="${thumb}" alt="${title}" class="w-full rounded-md mb-3">
+          <h3 class="font-semibold">${title}</h3>
+          <button class="text-pink-400 mt-2">Play</button>
+        `;
+        videoCard.querySelector('button').addEventListener('click', () => playVideo(vidId));
+        results.appendChild(videoCard);
+      });
+    }
+
+    function playVideo(videoId) {
+      player.src = `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+      playerSection.classList.remove('hidden');
+    }
+  </script>
 </body>
 </html>
